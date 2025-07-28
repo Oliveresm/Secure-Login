@@ -1,0 +1,76 @@
+services:
+  mysql_db:
+    image: mysql:8
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: supersecreta
+      MYSQL_DATABASE: chat_service_db
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: supersecreta
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks: [app_net]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -psupersecreta || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  init_db:
+    image: mysql:8
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    volumes:
+      - ./BackEnd/db:/db-init
+    entrypoint: [ "bash", "/db-init/init_db.sh" ]
+    networks: [app_net]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    environment:
+      DB_HOST: mysql_db
+      DB_USER: usuario
+      DB_PASS: supersecreta
+      DB_NAME: chat_service_db
+      FRONTEND_URL: http://localhost:5174
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./backend:/app        
+      - /app/node_modules      
+    command: ["ts-node-dev", "--respawn", "--transpile-only", "--poll", "src/index.ts"]
+    #       └─ This command runs the backend server with live reloading
+    ports: ["3001:3000"]
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    networks: [app_net]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: always
+    environment:
+      VITE_API_URL: http://localhost:3001/api
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm","run","dev","--","--host","0.0.0.0"]
+    ports: ["5174:5173"]
+    networks: [app_net]
+
+volumes:
+  mysql_data:
+
+networks:
+  app_net: {}

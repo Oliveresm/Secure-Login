@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "paths": {
+      "@modules/*": ["Modules/*"],
+      "@ui/*": ["ui/*"],
+      "@services/*": ["services/*"],
+      "@router/*": ["router/*"],
+      "@hooks/*": ["hooks/*"]
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

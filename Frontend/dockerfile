@@ -1,0 +1,9 @@
+# frontend/dockerfile
+FROM node:current-alpine3.22
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+# No copiamos src -> la trae el volumen
+EXPOSE 5173

@@ -1,0 +1,16 @@
+# backend/Dockerfile
+FROM node:current-alpine3.22
+WORKDIR /app
+
+# ───── Dependencias ─────
+# 1. Copiamos sólo los manifests para caché óptima
+COPY package*.json ./
+# 2. Instalamos dependencias exactas y herramientas globales
+RUN npm ci \
+  && npm install -g nodemon typescript ts-node ts-node-dev
+
+# ───── Archivos de configuración que ayudan al caché (opcional) ─────
+COPY tsconfig*.json ./
+
+EXPOSE 3000
+# El comando final lo define docker-compose, por eso aquí no hay CMD.
