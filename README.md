@@ -190,7 +190,7 @@ All services run in a single Docker network (`app_net`), and the database is aut
 ## 🙋‍♂️ Contact
 
 Oliver Suárez  
-[LinkedIn](https://www.linkedin.com/in/oliver-suarez) • [GitHub](https://github.com/oliversuarez) • [oliveresm@outlook.com]
+[LinkedIn](www.linkedin.com/in/oliversuamoraz) • [GitHub](https://github.com/Oliveresm) • [oliveresm@outlook.com]
 
 
 
