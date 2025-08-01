@@ -9,9 +9,9 @@ export default function Hero() {
     <section className="w-full h-screen text-center relative flex flex-col justify-between px-4">
       <div className="flex-1 flex flex-col items-center justify-center">
         <h1 className="text-7xl font-extrabold leading-tight text-white">
-          CHAT&nbsp;
+          A&nbsp;
           <FlipText
-            text="FASTER"
+            text="LOGIN"
             stagger={0.12}
             timing={0.4}
             className="text-indigo-500"

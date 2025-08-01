@@ -22,18 +22,8 @@ const featureCards = [
     link: "#",
   },
   {
-    title: "WebSockets",
-    description: "Real-time communication for instant messaging.",
-    link: "#",
-  },
-  {
     title: "REST",
     description: "Stateless APIs for authentication and user management.",
-    link: "#",
-  },
-  {
-    title: "Microservices",
-    description: "Scalable modular backend architecture.",
     link: "#",
   },
   {
