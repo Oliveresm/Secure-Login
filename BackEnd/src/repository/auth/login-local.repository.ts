@@ -4,40 +4,43 @@ import HashService from '../../services/hash.service';
 import UserLookupService from '../../services/user-lookup.service';
 import DB from '../../config/db';
 
+/**
+ * Autentica a un usuario local usando email y contraseña.
+ */
 const login = async (
   email: string,
-  uid: string
-): Promise<{ accessToken: string; refreshToken: string }> => {
+  password: string
+): Promise<{ accessToken: string; refreshToken:string }> => {
   const db = await DB.getInstance();
-  const user = await UserLookupService.getUserByEmail(email);
+  // Se elimina la dependencia del modelo 'User', usando 'any' en su lugar.
+  const user: any = await UserLookupService.getUserByEmail(email);
 
+  // 1. Verificar que el usuario existe, está verificado y es de tipo 'local'
   if (!user) {
-    const err = new Error('User does not exist') as any;
-    err.code = 'NOT_FOUND';
+    const err = new Error('User does not exist');
+    (err as any).code = 'NOT_FOUND';
     throw err;
   }
-
   if (!user.is_verified) {
-    const err = new Error('Account is not verified') as any;
-    err.code = 'UNVERIFIED';
+    const err = new Error('Account is not verified');
+    (err as any).code = 'UNVERIFIED';
+    throw err;
+  }
+  if (user.auth_type !== 'local') {
+    const err = new Error('Authentication method is not valid for this account.');
+    (err as any).code = 'WRONG_AUTH_TYPE';
     throw err;
   }
 
-  if (user.auth_type === 'local') {
-    await db.query(
-      `UPDATE users SET auth_type = 'oauth', auth_hash = ? WHERE email = ?`,
-      [uid, email]
-    );
-    user.auth_type = 'oauth';
-    user.auth_hash = uid;
-  }
-
-  if (user.auth_hash !== uid) {
-    const err = new Error('Invalid OAuth token UID') as any;
-    err.code = 'INVALID_UID';
+  // 2. Comparar la contraseña proporcionada con el hash almacenado
+  const isPasswordValid = await HashService.compare(password, user.auth_hash);
+  if (!isPasswordValid) {
+    const err = new Error('Incorrect password');
+    (err as any).code = 'INVALID_CREDENTIALS';
     throw err;
   }
 
+  // 3. Generar los tokens si las credenciales son válidas
   const accessToken = jwt.sign(
     { id: user.id, email: user.email },
     process.env.JWT_SECRET!,
@@ -45,16 +48,16 @@ const login = async (
   );
 
   const refreshToken = jwt.sign(
-    { Id: user.id },
+    { id: user.id },
     process.env.JWT_REFRESH_SECRET!,
-    { expiresIn: '1d' }
+    { expiresIn: '7d' }
   );
 
+  // 4. Almacenar el nuevo refresh token
   await db.query('CALL store_refresh_token(?, ?)', [user.id, refreshToken]);
 
   return { accessToken, refreshToken };
 };
-
 
 export default {
   login,

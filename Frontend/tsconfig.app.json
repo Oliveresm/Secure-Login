@@ -8,7 +8,7 @@
     "skipLibCheck": true,
 
     /* Fix: Use node resolution to support aliases like @services */
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
