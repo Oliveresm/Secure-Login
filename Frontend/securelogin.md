@@ -16,7 +16,187 @@ Este proyecto implementa el núcleo de un sistema de autenticación seguro y mod
 
 ## Diagrama de Clases (PlantUML)
 
-![alt text](image.png)
+@startuml
+' Título del Diagrama
+title Arquitectura Final del Sistema de Autenticación
+
+' --- Estilo y Configuración ---
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam package {
+  BackgroundColor LightBlue
+  BorderColor Blue
+}
+' --- Espaciado Aumentado ---
+skinparam nodesep 150 
+skinparam ranksep 200
+' ----------------------------------
+
+' --- Capa de Ruteo (Punto de Entrada) ---
+package "Routes" {
+  class AuthRoutes <<Router>> {
+    # req: Request
+    # res: Response
+    --
+    + registerLocalRoutes()
+    + loginLocalRoutes()
+    + verifyAccountRoutes()
+  }
+  class RegisterLocalRoutes <<Router>> {
+    # req: Request
+    # res: Response
+    --
+    + handleLocalRegister()
+  }
+  class LoginLocalRoutes <<Router>> {
+    # req: Request
+    # res: Response
+    --
+    + handleLoginLocal()
+  }
+  class VerifyAccountRoutes <<Router>> {
+    # req: Request
+    # res: Response
+    --
+    + handleVerifyAccount()
+  }
+}
+
+' --- Capa de Controladores (Lógica de Petición/Respuesta) ---
+package "Controllers" {
+  class RegisterLocalController <<Controller>> {
+   # req: Request
+   # res: Response
+   --
+   + handleLocalRegister(): Promise<void>
+  }
+  class LoginLocalController <<Controller>> {
+    # req: Request
+    # res: Response
+    --
+    + handleLocalLogin(): Promise<void>
+  }
+  class VerifyAccountController <<Controller>> {
+   # req: Request
+   # res: Response
+   --
+   + handleVerifyAccount(): Promise<void>
+  }
+}
+
+' --- Capa de Repositorios (Orquestación de Lógica) ---
+package "Repositories" {
+  class RegisterLocalRepository <<Repository>> {
+    - email: string
+    - display_name: string
+    - password: string
+    --
+    + registerLocalUser(): Promise<void>
+  }
+  class LoginLocalRepository <<Repository>> {
+    - email: string
+    - password: string
+    --
+    + login(): Promise<{accessToken, refreshToken}>
+  }
+}
+
+' --- Capa de Servicios (Lógica de Negocio Aislada) ---
+package "Services" {
+  class HashService <<Service>> {
+    + hash(value: string): Promise<string>
+    + compare(plain: string, hashed: string): Promise<boolean>
+    + generateToken(): Promise<string>
+  }
+  class EmailService <<Service>> {
+    + sendVerificationEmail(to: string, token: string): Promise<void>
+    + sendPasswordRecoveryEmail(to: string, token: string): Promise<void>
+  }
+  class UserLookupService <<Service>> {
+    + getUserByEmail(email: string): Promise<User | null>
+  }
+}
+
+' --- Capa de Funciones de Acceso a Datos (DAO) ---
+package "Data Access Functions" {
+    class createUser <<DAO>> {
+        + email: string
+        + display_name: string
+        + auth_type: 'local' | 'oauth'
+        + auth_hash: string | null
+        + out_hash: string | null
+        --
+        + execute(): Promise<void>
+    }
+}
+
+' --- Configuración (Conexión a BD) ---
+package "Config" {
+  class DB <<Singleton>> {
+   - instance: mysql.Connection
+   + {static} getInstance(): Promise<Connection>
+  }
+}
+
+' --- Esquema de la Base de Datos (Representación) ---
+package "Database Schema" {
+  class User <<Table>> {
+    - id: CHAR(36)
+    - email: VARCHAR(255)
+    - display_name: VARCHAR(100)
+    - auth_type: ENUM
+    - auth_hash: VARCHAR(255)
+    - is_verified: BOOLEAN
+    - created_at: DATETIME
+  }
+  class RefreshToken <<Table>> {
+    - id: CHAR(36)
+    - user_id: CHAR(36)
+    - token: VARCHAR(255)
+    - expires_at: DATETIME
+  }
+  enum AuthType <<Enum>> {
+    LOCAL
+    OAUTH
+  }
+ 
+  User "1" -- "0..*" RefreshToken
+  User ..> AuthType
+}
+
+
+' =============================================
+' --- RELACIONES Y FLUJOS DE LA APLICACIÓN ---
+' =============================================
+
+' --- Conexión Principal a la Base de Datos ---
+DB ..> User
+
+' --- Flujo de Registro ---
+AuthRoutes --> RegisterLocalRoutes
+RegisterLocalRoutes ..> RegisterLocalController
+RegisterLocalController ..> RegisterLocalRepository
+RegisterLocalRepository ..> createUser
+RegisterLocalRepository ..> EmailService
+RegisterLocalRepository ..> HashService
+createUser ..> DB
+
+
+' --- Flujo de Login ---
+AuthRoutes --> LoginLocalRoutes
+LoginLocalRoutes ..> LoginLocalController
+LoginLocalController ..> LoginLocalRepository
+LoginLocalRepository ..> UserLookupService
+LoginLocalRepository ..> HashService
+LoginLocalRepository ..> DB
+UserLookupService ..> DB
+
+' --- Flujo de Verificación de Cuenta ---
+AuthRoutes --> VerifyAccountRoutes
+VerifyAccountRoutes ..> VerifyAccountController
+VerifyAccountController ..> HashService
+VerifyAccountController ..> DB
+@enduml
 
 ### Explicación de la Arquitectura del Sistema
 
