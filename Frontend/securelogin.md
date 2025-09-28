@@ -3,9 +3,12 @@
 ---
 
 ## Integrantes del Equipo
-* [Nombre del Integrante 1]
-* [Nombre del Integrante 2]
-* [Nombre del Integrante 3]
+* ALEJANDRO JUNCAL PONCE
+* ARLETH MISUKI ORTIZ ROQUE
+* SAMANTHA DE LA MORA LòPEZ
+* DIEGO ARIAS TIRADO
+* OLIVER ENRIQUE SUÁREZ MORA
+* DANIEL ALEJANDRO ALVAREZ MATA
 
 ---
 
@@ -168,10 +171,7 @@ package "Database Schema" {
   User ..> AuthType
 }
 
-
-' =============================================
 ' --- RELACIONES Y FLUJOS DE LA APLICACIÓN ---
-' =============================================
 
 ' --- Conexión Principal a la Base de Datos ---
 DB ..> User
