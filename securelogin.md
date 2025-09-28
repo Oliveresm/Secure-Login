@@ -124,11 +124,11 @@ package "Services" {
 ' --- Capa de Funciones de Acceso a Datos (DAO) ---
 package "Data Access Functions" {
     interface ICreateUser {
-        # email: string
-        # display_name: string
-        # auth_type: 'local' | 'oauth'
-        # auth_hash: string | null
-        # out_hash: string | null
+        + email: string
+        + display_name: string
+        + auth_type: 'local' | 'oauth'
+        + auth_hash: string | null
+        + out_hash: string | null
     }
     class "create-user.model" as CreateUserModel <<DAO>> {
         --
@@ -211,13 +211,14 @@ Es el **punto de entrada** de todas las solicitudes HTTP al sistema.
 * **Función**: Su única responsabilidad es recibir las peticiones (`Request`) y dirigirlas al controlador adecuado. No contiene lógica de negocio.
 * **Clases**:
     * `AuthRoutes`: Actúa como el enrutador principal que agrupa todas las rutas relacionadas con la autenticación.
-    * `RegisterLocalRoutes`, `LoginLocalRoutes`, `verifyAccountRoutes`,etc.: Son sub-enrutadores que manejan endpoints específicos (ej: `/register`, `/login`) y llaman al método correspondiente en el controlador.
-* **Atributos Publicos (`#`)**: Los atributos `req` y `res` son publicos, indicando que son accesibles desde afuera
+    * `RegisterLocalRoutes`, `LoginLocalRoutes`, `VerifyAccountRoutes`, etc.: Son sub-enrutadores que manejan endpoints específicos (ej: `/register`, `/login`) y llaman al método correspondiente en el controlador.
+* **Atributos Protegidos (`#`)**: Los atributos `req` y `res` son protegidos. Esto permite el acceso dentro de la misma clase y en sus subclases (herencia), pero no desde clases externas, logrando un buen encapsulamiento.
 
 #### Capa de Controladores (Controllers)
 Esta capa actúa como el **intermediario** entre las rutas y la lógica de negocio.
 * **Función**: Extrae la información necesaria de la solicitud (`req`), como el cuerpo (body) o los parámetros. Llama a los repositorios para ejecutar la lógica de negocio y, finalmente, formula y envía la respuesta (`res`) al cliente (por ejemplo, un código 200 con un token JWT, o un 401 si las credenciales son inválidas).
 * **Clases**: `RegisterLocalController`, `LoginLocalController`, `VerifyAccountController`.
+* **Atributos Protegidos (`#`)**: Al igual que en la capa de ruteo, los atributos `req` y `res` son protegidos para mantener un encapsulamiento consistente.
 
 #### Capa de Repositorios (Repositories)
 Esta capa **orquesta la lógica de negocio**. No ejecuta la lógica directamente, sino que coordina a los servicios y funciones de acceso a datos (DAO) para cumplir con una tarea.
@@ -245,18 +246,34 @@ Representa la **estructura de las tablas** en la base de datos.
 * **Función**: Sirve como una referencia visual de cómo se almacenan los datos, incluyendo las tablas (`User`, `RefreshToken`), sus columnas y las relaciones entre ellas.
 
 ---
+
+### ¿Por qué `public`, `protected` y `private`? (Visibilidad)
+
+La visibilidad (`+`, `#`, `-`) define qué tan accesible es un atributo o método desde otras partes del código. Elegir la correcta es clave para un diseño seguro y robusto.
+
+* **Privado (`-`)**: Es el nivel **más restrictivo**. Un miembro privado solo puede ser accedido desde **dentro de la misma clase**.
+    * **¿Por qué se usa aquí?**: En los `Repositories`, los atributos como `email` y `password` son privados. Esto es fundamental para la **encapsulación** y la **seguridad**. Ninguna otra clase puede leer o modificar directamente la contraseña de un usuario. La única forma de interactuar con esos datos es a través de los métodos públicos de la clase (como `registerLocalUser()`).
+
+* **Protegido (`#`)**: Es un nivel **intermedio**. Un miembro protegido puede ser accedido desde **dentro de la misma clase y por cualquier clase que herede de ella (subclases)**.
+    * **¿Por qué se usa aquí?**: Los atributos `req` (Request) y `res` (Response) en `Routes` y `Controllers` son protegidos. Esto sugiere un diseño donde una clase base podría definirlos y las clases específicas (como `RegisterLocalController`) los heredarían para usarlos. Los mantiene ocultos para el resto de la aplicación, pero disponibles para su jerarquía de herencia.
+
+* **Público (`+`)**: Es el nivel **más permisivo**. Un miembro público puede ser accedido desde **cualquier parte del código**.
+    * **¿Por qué se usa aquí?**: Los métodos como `handleLocalRegister()` en un controlador o los miembros de una interfaz (`ICreateUser`) son públicos. Estos forman la **"API pública"** de la clase o el contrato de la interfaz; son los puntos de entrada diseñados para que otras clases los llamen e interactúen con el objeto.
+
+---
+
 ### Relaciones y Flujos entre Clases
 
-Las flechas y líneas en el diagrama no son decorativas; definen cómo interactúan las clases y cómo fluye la información.
+Las flechas y líneas en el diagrama definen cómo interactúan las clases y cómo fluye la información.
 
-* **Dependencia (`..>` y `-->`)**: La flecha punteada o sólida con punta abierta indica que una clase **usa** a otra. La clase de origen necesita una instancia de la clase de destino para poder funcionar. Esto define el flujo de control de la aplicación.
+* **Dependencia (`..>` y `-->`)**: La flecha punteada o sólida con punta abierta indica que una clase **usa** a otra. La clase de origen necesita una instancia de la clase de destino para poder funcionar.
     * **Ejemplo de Flujo (Registro)**:
-        1.  `AuthRoutes --> RegisterLocalRoutes`: El enrutador principal delega la petición de registro al enrutador específico.
-        2.  `RegisterLocalRoutes ..> RegisterLocalController`: El enrutador de registro llama al método `handleLocalRegister` del controlador.
-        3.  `RegisterLocalController ..> RegisterLocalRepository`: El controlador le pasa los datos de registro (email, password) al repositorio para que orqueste la operación.
-        4.  `RegisterLocalRepository ..> HashService`, `EmailService`, `"create-user.model"`: El repositorio **usa** múltiples servicios y DAOs para cumplir su tarea: hashear la contraseña, crear el usuario en la BD y enviar el email.
+        1.  `AuthRoutes --> RegisterLocalRoutes`: El enrutador principal delega la petición al enrutador específico.
+        2.  `RegisterLocalRoutes ..> RegisterLocalController`: El enrutador de registro llama al método del controlador.
+        3.  `RegisterLocalController ..> RegisterLocalRepository`: El controlador pasa los datos al repositorio para que orqueste la operación.
+        4.  `RegisterLocalRepository ..> HashService`, `EmailService`, `"create-user.model"`: El repositorio **usa** múltiples servicios y DAOs para cumplir su tarea.
 
 * **Asociación (`--`)**: La línea sólida sin flecha entre `User` y `RefreshToken` indica una **relación estructural** a largo plazo.
-    * **Significado**: Un objeto `User` está conectado o "asociado" con objetos `RefreshToken`. La multiplicidad (`1` y `0..*`) especifica que **un** `User` puede tener **cero o muchos** `RefreshToken`. Esto se traduce directamente en una relación de clave primaria y foránea en la base de datos.
-    
-* **Implementación (`..|>`)**: La flecha punteada con un triángulo hueco, como la que va de `"create-user.model"` a `ICreateUser`, indica que una clase **implementa** una interfaz. Esto significa que la clase se compromete a proporcionar una implementación concreta para todos los miembros definidos en la interfaz, asegurando un "contrato" de estructura y funcionalidad.
+    * **Significado**: Un objeto `User` está conectado con cero o muchos objetos `RefreshToken`. Esto se traduce en una relación de clave foránea en la base de datos.
+
+* **Implementación (`..|>`)**: La flecha punteada con un triángulo hueco (de `"create-user.model"` a `ICreateUser`) indica que una clase **implementa** una interfaz. La clase se compromete a proporcionar una implementación para todos los miembros definidos en la interfaz, asegurando un "contrato" de estructura.
