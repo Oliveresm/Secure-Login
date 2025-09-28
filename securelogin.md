@@ -202,9 +202,13 @@ VerifyAccountController ..> HashService
 VerifyAccountController ..> DB
 @enduml
 ```
+---
+
 ### Explicación del Diagrama de Arquitectura
 
 Este diagrama UML describe una arquitectura de software multicapa para un sistema de autenticación. Cada capa tiene una responsabilidad clara, lo que promueve un código más limpio, mantenible y escalable.
+
+---
 
 #### Capa de Ruteo (Routes)
 Es el **punto de entrada** de todas las solicitudes HTTP al sistema.
@@ -214,16 +218,22 @@ Es el **punto de entrada** de todas las solicitudes HTTP al sistema.
     * `RegisterLocalRoutes`, `LoginLocalRoutes`, `VerifyAccountRoutes`, etc.: Son sub-enrutadores que manejan endpoints específicos (ej: `/register`, `/login`) y llaman al método correspondiente en el controlador.
 * **Atributos Protegidos (`#`)**: Los atributos `req` y `res` son protegidos. Esto permite el acceso dentro de la misma clase y en sus subclases (herencia), pero no desde clases externas, logrando un buen encapsulamiento.
 
+---
+
 #### Capa de Controladores (Controllers)
 Esta capa actúa como el **intermediario** entre las rutas y la lógica de negocio.
 * **Función**: Extrae la información necesaria de la solicitud (`req`), como el cuerpo (body) o los parámetros. Llama a los repositorios para ejecutar la lógica de negocio y, finalmente, formula y envía la respuesta (`res`) al cliente (por ejemplo, un código 200 con un token JWT, o un 401 si las credenciales son inválidas).
 * **Clases**: `RegisterLocalController`, `LoginLocalController`, `VerifyAccountController`.
 * **Atributos Protegidos (`#`)**: Al igual que en la capa de ruteo, los atributos `req` y `res` son protegidos para mantener un encapsulamiento consistente.
 
+---
+
 #### Capa de Repositorios (Repositories)
 Esta capa **orquesta la lógica de negocio**. No ejecuta la lógica directamente, sino que coordina a los servicios y funciones de acceso a datos (DAO) para cumplir con una tarea.
 * **Función**: Recibe los datos del controlador (ej: email y contraseña) y los utiliza para llamar a diferentes servicios. Por ejemplo, `RegisterLocalRepository` llamará a `HashService` para encriptar la contraseña, a `"create-user.model"` para guardar el usuario en la base de datos y a `EmailService` para enviar un correo de verificación.
 * **Atributos Privados (`-`)**: Los datos sensibles como `email` y `password` son **privados**. Esto significa que solo pueden ser accedidos y manipulados por los métodos de la propia clase, garantizando un alto nivel de encapsulamiento y seguridad.
+
+---
 
 #### Capa de Servicios (Services)
 Contiene la **lógica de negocio pura y reutilizable**.
@@ -233,13 +243,19 @@ Contiene la **lógica de negocio pura y reutilizable**.
     * `EmailService`: Gestiona el envío de correos electrónicos.
     * `UserLookupService`: Proporciona métodos para buscar usuarios en la base de datos.
 
+---
+
 #### Capa de Funciones de Acceso a Datos (DAO)
 Es la capa más baja y la única que **interactúa directamente con la base de datos**.
 * **Función**: Contiene las funciones que ejecutan las consultas SQL. Por ejemplo, la clase `"create-user.model"` implementa la interfaz `ICreateUser` para definir los datos que necesita y contiene la lógica para ejecutar un `INSERT INTO` en la tabla `User`. Este uso de interfaces asegura que los datos que recibe el DAO siempre tengan una estructura consistente.
 
+---
+
 #### Configuración (Config)
 Gestiona la configuración global de la aplicación.
 * **Función**: En este caso, la clase `DB` maneja la conexión a la base de datos utilizando un patrón **Singleton**, que asegura que solo exista una única instancia de la conexión en toda la aplicación, optimizando recursos.
+
+---
 
 #### Esquema de la Base de Datos (Database Schema)
 Representa la **estructura de las tablas** en la base de datos.
