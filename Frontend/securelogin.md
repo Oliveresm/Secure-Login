@@ -16,7 +16,7 @@ Este proyecto implementa el núcleo de un sistema de autenticación seguro y mod
 
 ## Diagrama de Clases (PlantUML)
 
-```
+```plantuml
 @startuml
 ' Título del Diagrama
 title Arquitectura Final del Sistema de Autenticación
@@ -120,15 +120,18 @@ package "Services" {
 
 ' --- Capa de Funciones de Acceso a Datos (DAO) ---
 package "Data Access Functions" {
-    class createUser <<DAO>> {
+    interface ICreateUser {
         + email: string
         + display_name: string
         + auth_type: 'local' | 'oauth'
         + auth_hash: string | null
         + out_hash: string | null
+    }
+    class "create-user.model" as CreateUserModel <<DAO>> {
         --
         + execute(): Promise<void>
     }
+    CreateUserModel ..|> ICreateUser
 }
 
 ' --- Configuración (Conexión a BD) ---
@@ -177,10 +180,10 @@ DB ..> User
 AuthRoutes --> RegisterLocalRoutes
 RegisterLocalRoutes ..> RegisterLocalController
 RegisterLocalController ..> RegisterLocalRepository
-RegisterLocalRepository ..> createUser
+RegisterLocalRepository ..> CreateUserModel
 RegisterLocalRepository ..> EmailService
 RegisterLocalRepository ..> HashService
-createUser ..> DB
+CreateUserModel ..> DB
 
 
 ' --- Flujo de Login ---
