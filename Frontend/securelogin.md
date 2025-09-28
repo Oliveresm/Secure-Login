@@ -202,8 +202,7 @@ VerifyAccountController ..> HashService
 VerifyAccountController ..> DB
 @enduml
 ```
-
-### Explicación de la Arquitectura del Sistema
+### Explicación del Diagrama de Arquitectura
 
 Este diagrama UML describe una arquitectura de software multicapa para un sistema de autenticación. Cada capa tiene una responsabilidad clara, lo que promueve un código más limpio, mantenible y escalable.
 
@@ -222,7 +221,7 @@ Esta capa actúa como el **intermediario** entre las rutas y la lógica de negoc
 
 #### Capa de Repositorios (Repositories)
 Esta capa **orquesta la lógica de negocio**. No ejecuta la lógica directamente, sino que coordina a los servicios y funciones de acceso a datos (DAO) para cumplir con una tarea.
-* **Función**: Recibe los datos del controlador (ej: email y contraseña) y los utiliza para llamar a diferentes servicios. Por ejemplo, `RegisterLocalRepository` llamará a `HashService` para encriptar la contraseña, a `createUser` para guardar el usuario en la base de datos y a `EmailService` para enviar un correo de verificación.
+* **Función**: Recibe los datos del controlador (ej: email y contraseña) y los utiliza para llamar a diferentes servicios. Por ejemplo, `RegisterLocalRepository` llamará a `HashService` para encriptar la contraseña, a `"create-user.model"` para guardar el usuario en la base de datos y a `EmailService` para enviar un correo de verificación.
 * **Atributos Privados (`-`)**: Los datos sensibles como `email` y `password` son **privados**. Esto significa que solo pueden ser accedidos y manipulados por los métodos de la propia clase, garantizando un alto nivel de encapsulamiento y seguridad.
 
 #### Capa de Servicios (Services)
@@ -235,7 +234,7 @@ Contiene la **lógica de negocio pura y reutilizable**.
 
 #### Capa de Funciones de Acceso a Datos (DAO)
 Es la capa más baja y la única que **interactúa directamente con la base de datos**.
-* **Función**: Contiene las funciones que ejecutan las consultas SQL (o de cualquier motor de BD) para crear, leer, actualizar o eliminar registros. Por ejemplo, la clase `createUser` contiene la lógica para ejecutar un `INSERT INTO` en la tabla `User`.
+* **Función**: Contiene las funciones que ejecutan las consultas SQL. Por ejemplo, la clase `"create-user.model"` implementa la interfaz `ICreateUser` para definir los datos que necesita y contiene la lógica para ejecutar un `INSERT INTO` en la tabla `User`. Este uso de interfaces asegura que los datos que recibe el DAO siempre tengan una estructura consistente.
 
 #### Configuración (Config)
 Gestiona la configuración global de la aplicación.
@@ -269,7 +268,9 @@ Las flechas y líneas en el diagrama no son decorativas; definen cómo interact�
         1.  `AuthRoutes --> RegisterLocalRoutes`: El enrutador principal delega la petición de registro al enrutador específico.
         2.  `RegisterLocalRoutes ..> RegisterLocalController`: El enrutador de registro llama al método `handleLocalRegister` del controlador.
         3.  `RegisterLocalController ..> RegisterLocalRepository`: El controlador le pasa los datos de registro (email, password) al repositorio para que orqueste la operación.
-        4.  `RegisterLocalRepository ..> HashService`, `EmailService`, `createUser`: El repositorio **usa** múltiples servicios y DAOs para cumplir su tarea: hashear la contraseña, crear el usuario en la BD y enviar el email.
+        4.  `RegisterLocalRepository ..> HashService`, `EmailService`, `"create-user.model"`: El repositorio **usa** múltiples servicios y DAOs para cumplir su tarea: hashear la contraseña, crear el usuario en la BD y enviar el email.
 
 * **Asociación (`--`)**: La línea sólida sin flecha entre `User` y `RefreshToken` indica una **relación estructural** a largo plazo.
     * **Significado**: Un objeto `User` está conectado o "asociado" con objetos `RefreshToken`. La multiplicidad (`1` y `0..*`) especifica que **un** `User` puede tener **cero o muchos** `RefreshToken`. Esto se traduce directamente en una relación de clave primaria y foránea en la base de datos.
+    
+* **Implementación (`..|>`)**: La flecha punteada con un triángulo hueco, como la que va de `"create-user.model"` a `ICreateUser`, indica que una clase **implementa** una interfaz. Esto significa que la clase se compromete a proporcionar una implementación concreta para todos los miembros definidos en la interfaz, asegurando un "contrato" de estructura y funcionalidad.
