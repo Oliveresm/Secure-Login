@@ -16,7 +16,7 @@ Este proyecto implementa el núcleo de un sistema de autenticación seguro y mod
 
 ## Diagrama de Clases (PlantUML)
 
-
+![alt text](image.png)
 
 ### Explicación de la Arquitectura del Sistema
 
