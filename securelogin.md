@@ -203,7 +203,6 @@ VerifyAccountController ..> DB
 @enduml
 ```
 ---
-
 ### Explicación del Diagrama de Arquitectura
 
 Este diagrama UML describe una arquitectura de software multicapa para un sistema de autenticación. Cada capa tiene una responsabilidad clara, lo que promueve un código más limpio, mantenible y escalable.
@@ -216,7 +215,7 @@ Es el **punto de entrada** de todas las solicitudes HTTP al sistema.
 * **Clases**:
     * `AuthRoutes`: Actúa como el enrutador principal que agrupa todas las rutas relacionadas con la autenticación.
     * `RegisterLocalRoutes`, `LoginLocalRoutes`, `VerifyAccountRoutes`, etc.: Son sub-enrutadores que manejan endpoints específicos (ej: `/register`, `/login`) y llaman al método correspondiente en el controlador.
-* **Atributos Protegidos (`#`)**: Los atributos `req` y `res` son protegidos. Esto permite el acceso dentro de la misma clase y en sus subclases (herencia), pero no desde clases externas, logrando un buen encapsulamiento.
+* **Atributos Públicos (`+`)**: Los atributos `req` y `res` son públicos para permitir una fácil integración con el framework subyacente que gestiona el ciclo de vida de las peticiones y respuestas HTTP.
 
 ---
 
@@ -224,7 +223,7 @@ Es el **punto de entrada** de todas las solicitudes HTTP al sistema.
 Esta capa actúa como el **intermediario** entre las rutas y la lógica de negocio.
 * **Función**: Extrae la información necesaria de la solicitud (`req`), como el cuerpo (body) o los parámetros. Llama a los repositorios para ejecutar la lógica de negocio y, finalmente, formula y envía la respuesta (`res`) al cliente (por ejemplo, un código 200 con un token JWT, o un 401 si las credenciales son inválidas).
 * **Clases**: `RegisterLocalController`, `LoginLocalController`, `VerifyAccountController`.
-* **Atributos Protegidos (`#`)**: Al igual que en la capa de ruteo, los atributos `req` y `res` son protegidos para mantener un encapsulamiento consistente.
+* **Atributos Públicos (`+`)**: Al igual que en la capa de ruteo, `req` y `res` son públicos para interactuar directamente con el flujo de datos HTTP.
 
 ---
 
@@ -268,13 +267,12 @@ Representa la **estructura de las tablas** en la base de datos.
 La visibilidad (`+`, `#`, `-`) define qué tan accesible es un atributo o método desde otras partes del código. Elegir la correcta es clave para un diseño seguro y robusto.
 
 * **Privado (`-`)**: Es el nivel **más restrictivo**. Un miembro privado solo puede ser accedido desde **dentro de la misma clase**.
-    * **¿Por qué se usa aquí?**: En los `Repositories`, los atributos como `email` y `password` son privados. Esto es fundamental para la **encapsulación** y la **seguridad**. Ninguna otra clase puede leer o modificar directamente la contraseña de un usuario. La única forma de interactuar con esos datos es a través de los métodos públicos de la clase (como `registerLocalUser()`).
+    * **¿Por qué se usa aquí?**: En los `Repositories`, los atributos como `email` y `password` son privados. Esto es fundamental para la **encapsulación** y la **seguridad**. Ninguna otra clase puede leer o modificar directamente la contraseña de un usuario.
 
-* **Protegido (`#`)**: Es un nivel **intermedio**. Un miembro protegido puede ser accedido desde **dentro de la misma clase y por cualquier clase que herede de ella (subclases)**.
-    * **¿Por qué se usa aquí?**: Los atributos `req` (Request) y `res` (Response) en `Routes` y `Controllers` son protegidos. Esto sugiere un diseño donde una clase base podría definirlos y las clases específicas (como `RegisterLocalController`) los heredarían para usarlos. Los mantiene ocultos para el resto de la aplicación, pero disponibles para su jerarquía de herencia.
+* **Protegido (`#`)**: Es un nivel **intermedio**. Un miembro protegido puede ser accedido desde **dentro de la misma clase y por cualquier clase que herede de ella (subclases)**. Aunque no se utiliza en este diagrama, es una herramienta útil para crear clases base que pueden ser extendidas de forma controlada.
 
 * **Público (`+`)**: Es el nivel **más permisivo**. Un miembro público puede ser accedido desde **cualquier parte del código**.
-    * **¿Por qué se usa aquí?**: Los métodos como `handleLocalRegister()` en un controlador o los miembros de una interfaz (`ICreateUser`) son públicos. Estos forman la **"API pública"** de la clase o el contrato de la interfaz; son los puntos de entrada diseñados para que otras clases los llamen e interactúen con el objeto.
+    * **¿Por qué se usa aquí?**: Los atributos `req` y `res`, los métodos de los controladores como `handleLocalRegister()`, y los miembros de la interfaz `ICreateUser` son públicos. Estos forman la **"API pública"** de las clases, permitiendo la comunicación y el paso de datos esenciales entre las distintas capas.
 
 ---
 
