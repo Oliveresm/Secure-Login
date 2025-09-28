@@ -16,6 +16,7 @@ Este proyecto implementa el núcleo de un sistema de autenticación seguro y mod
 
 ## Diagrama de Clases (PlantUML)
 
+```
 @startuml
 ' Título del Diagrama
 title Arquitectura Final del Sistema de Autenticación
@@ -197,6 +198,7 @@ VerifyAccountRoutes ..> VerifyAccountController
 VerifyAccountController ..> HashService
 VerifyAccountController ..> DB
 @enduml
+```
 
 ### Explicación de la Arquitectura del Sistema
 
